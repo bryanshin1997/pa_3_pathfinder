@@ -26,8 +26,8 @@ class PathFinder:
 	def __init__(self, start, goal):
 
 		# Convert both the start and goal from the map frame to the occupancy grid frame.
-		self.start_ind = self.map_to_grid_frame(self.start)
-		self.goal_ind = self.map_to_grid_frame(self.goal)
+		self.start_map = start
+		self.goal_map = goal
 
 		self.pose_pub = rospy.Publisher("pose_sequence", PoseStamped, queue_size = 0) # Publishes each Pose in the path.
 		self.map_sub = rospy.Subscriber("map",  OccupancyGrid, self.get_map, queue_size = 1) # Gets the occupancy grid data.
@@ -53,6 +53,9 @@ class PathFinder:
 		# Waits until the occupancy grid data is received.
 		while self.map_data == None:
 			self.publish_rate.sleep()
+
+		self.start_ind = self.map_to_grid_frame(self.start_map)
+		self.goal_ind = self.map_to_grid_frame(self.goal_map)
 
 		visited_array = [0] * self.num_nodes # Keeps track of visited nodes. 0 = Not Visited, 1 = Visited. Uses Row-Major indexing.
 		self.path_tracker = [-1] * self.num_nodes # Keeps track of the parent node of each node. Uses Row-Major indexing.
@@ -138,8 +141,8 @@ class PathFinder:
 
 
 	# Converts the map frame to the occupancy grid frame.
-	def map_to_grid_frame(self, ref_point):
-		return [int(ref_point[0]/self.resolution), int(ref_point[1]/self.resolution)]
+	def map_to_grid_frame(self, map_point):
+		return [int(map_point[0]/self.resolution), int(map_point[1]/self.resolution)]
 
 
 	# Gets the neighbors of the node. Returns the neighbor in reverse-order-of-preference, so that when added to the stack, neighbors are explored in the correct order.
